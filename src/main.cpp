@@ -91,6 +91,68 @@ void IRAM_ATTR pulseCOUNT()
   pulse_flag = true;
 }
 
+
+void pimode_function();
+void oled_init();
+void photo_hall_function();
+void button_function();
+void lifter_fuction();
+void cutter_function();
+void suction_function();
+void suction_pedal_fuction();
+
+void setup()
+{
+
+  // Serial.begin(115200);
+
+  pimode_function();
+
+  oled_init();
+}
+
+void loop()
+{
+
+  /*************************voltage**************************************/
+  float sensorValue = analogRead(analogPin);
+  voltage = sensorValue * (3.3 / 4095);
+  // Serial.println(voltage);
+  // delay(100);
+  /****************************voltage***********************************/
+
+  photo_hall_function();
+
+  button_function();
+
+  lifter_fuction();
+
+  cutter_function();
+
+  suction_function();
+
+  suction_pedal_fuction();
+}
+
+void pimode_function()
+{
+
+  pinMode(up_sw, INPUT);
+  pinMode(down_sw, INPUT);
+  pinMode(menu_sw, INPUT);
+  pinMode(solenoid_pin, OUTPUT);
+  pinMode(suction_solenoid_pin, OUTPUT);
+  pinMode(lifter_solenoid_pin, OUTPUT);
+  pinMode(hall_pin, INPUT);
+  pinMode(photo_pin, INPUT);
+
+  pinMode(relay, OUTPUT);
+  digitalWrite(relay, LOW);
+  delay(1);
+
+  attachInterrupt(hall_pin, pulseCOUNT, RISING);
+}
+
 void eeprom_function()
 {
 
@@ -131,6 +193,40 @@ void eeprom_function()
   suction_delay = EEPROM.readInt(delay_suction_address);
   start_suction = EEPROM.readInt(start_suction_address);
   end_suction = EEPROM.readInt(end_suction_address);
+}
+
+void photo_hall_function()
+{
+
+  photo = digitalRead(photo_pin); // read the input pin
+
+  if (pulse_flag == true)
+  {
+    pulse_flag = false;
+    pulse++;
+    EEPROM.writeInt(pulse_address, pulse); // -2^31
+    EEPROM.commit();
+    // Serial.print(pulse);
+    // Serial.println(" pulse");
+  }
+
+  if (photo == 1 && photo_flag == false)
+  {
+    photo_flag = true;
+    EEPROM.writeInt(photo_address, photo_flag); // -2^31
+    EEPROM.commit();
+    pulse = 0;
+    // Serial.println("object detected");
+  }
+
+  if (photo == 0 && photo_flag == true)
+  {
+    photo_flag = false;
+    EEPROM.writeInt(photo_address, photo_flag); // -2^31
+    EEPROM.commit();
+    pulse = 0;
+    // Serial.println("object not detected");
+  }
 }
 
 void oled_init()
@@ -806,90 +902,4 @@ void button_function()
 
     break;
   }
-}
-
-void setup()
-{
-
-  Serial.begin(115200);
-
-  pinMode(up_sw, INPUT);
-  pinMode(down_sw, INPUT);
-  pinMode(menu_sw, INPUT);
-  pinMode(solenoid_pin, OUTPUT);
-  pinMode(suction_solenoid_pin, OUTPUT);
-  pinMode(lifter_solenoid_pin, OUTPUT);
-  pinMode(hall_pin, INPUT);
-  pinMode(photo_pin, INPUT);
-
-  pinMode(relay, OUTPUT);
-  digitalWrite(relay, LOW);
-  delay(1);
-
-  attachInterrupt(hall_pin, pulseCOUNT, RISING);
-
-  eeprom_function();
-
-  oled_init();
-}
-
-void loop()
-{
-
-  /*************************voltage**************************************/
-  float sensorValue = analogRead(analogPin);
-  voltage = sensorValue * (3.3 / 4095);
-  // Serial.println(voltage);
-  // delay(100);
-  /****************************voltage***********************************/
-
-  button_function();
-
-  /******************************************PULSE&PHOTO****************************************************/
-  photo = digitalRead(photo_pin); // read the input pin
-
-  if (pulse_flag == true)
-  {
-    pulse_flag = false;
-    pulse++;
-    EEPROM.writeInt(pulse_address, pulse); // -2^31
-    EEPROM.commit();
-    // Serial.print(pulse);
-    // Serial.println(" pulse");
-  }
-
-  if (photo == 1 && photo_flag == false)
-  {
-    photo_flag = true;
-    EEPROM.writeInt(photo_address, photo_flag); // -2^31
-    EEPROM.commit();
-    pulse = 0;
-    // Serial.println("object detected");
-  }
-
-  if (photo == 0 && photo_flag == true)
-  {
-    photo_flag = false;
-    EEPROM.writeInt(photo_address, photo_flag); // -2^31
-    EEPROM.commit();
-    pulse = 0;
-    // Serial.println("object not detected");
-  }
-  /******************************************PULSE&PHOTO****************************************************/
-
-  /**********************************************LIFTER*****************************************************/
-  lifter_fuction();
-  /**********************************************LIFTER*****************************************************/
-
-  /**********************************************CUTTER*****************************************************/
-  cutter_function();
-  /**********************************************CUTTER*****************************************************/
-
-  /*****************************************SUCTION*********************************************************/
-  suction_function();
-  /*******************************************SUCTION********************************************************/
-
-  /*****************************************SUCTION_PEDAL****************************************************/
-  suction_pedal_fuction();
-  /*******************************************SUCTION_PEDAL**************************************************/
 }
