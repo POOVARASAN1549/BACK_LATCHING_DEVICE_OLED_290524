@@ -91,7 +91,7 @@ void IRAM_ATTR pulseCOUNT()
   pulse_flag = true;
 }
 
-
+// Function declarations (prototypes)
 void pimode_function();
 void oled_init();
 void photo_hall_function();
